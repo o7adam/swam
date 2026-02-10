@@ -1,0 +1,23 @@
+services:
+  webdav:
+    image: bytemark/webdav
+    container_name: webdav
+    restart: unless-stopped
+    environment:
+      - AUTH_TYPE=Basic
+      - USERNAME=adam
+      - PASSWORD=${WEBDAV_PASSWORD}
+    volumes:
+      - ./data:/var/lib/dav
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.webdav.rule=Host(`dav.86hate.com`)
+      - traefik.http.routers.webdav.entrypoints=websecure
+      - traefik.http.routers.webdav.tls.certresolver=letsencrypt-dns
+      - traefik.http.services.webdav.loadbalancer.server.port=80
+    networks:
+      - traefik-net
+
+networks:
+  traefik-net:
+    external: true

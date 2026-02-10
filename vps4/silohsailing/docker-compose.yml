@@ -1,0 +1,51 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: silohsailing
+    restart: unless-stopped
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      # Preview at www.86hate.com/charter
+      - "traefik.http.routers.siloh-preview.rule=(Host(`86hate.com`) || Host(`www.86hate.com`)) && PathPrefix(`/charter`)"
+      - "traefik.http.routers.siloh-preview.entrypoints=websecure"
+      - "traefik.http.routers.siloh-preview.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.siloh-preview.priority=100"
+      - "traefik.http.routers.siloh-preview.middlewares=charter-slash,strip-charter"
+      - "traefik.http.middlewares.charter-slash.redirectregex.regex=^(https?://[^/]+/charter)$$"
+      - "traefik.http.middlewares.charter-slash.redirectregex.replacement=$${1}/"
+      - "traefik.http.middlewares.charter-slash.redirectregex.permanent=true"
+      - "traefik.http.middlewares.strip-charter.stripprefix.prefixes=/charter"
+      - "traefik.http.routers.siloh-preview.service=silohsailing"
+      # Production router - will work when DNS propagates
+      - "traefik.http.routers.silohsailing.rule=Host(`silohsaling.com`) || Host(`www.silohsaling.com`)"
+      - "traefik.http.routers.silohsailing.entrypoints=websecure"
+      - "traefik.http.routers.silohsailing.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.silohsailing.service=silohsailing"
+      # Service
+      - "traefik.http.services.silohsailing.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik"
+
+  api:
+    image: node:20-alpine
+    container_name: silohsailing-api
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./api:/app
+      - /opt/shared:/opt/shared
+    command: sh -c "npm install --production && node server.js"
+    environment:
+      - MAIL_PASS=F0rm5#Subm1t@2026!Secure
+    networks:
+      - internal
+
+networks:
+  traefik:
+    external: true
+  internal:

@@ -1,0 +1,69 @@
+version: "3.8"
+services:
+  agent-exchange:
+    build: .
+    container_name: agent-exchange
+    restart: unless-stopped
+    environment:
+      - MONGO_URI=mongodb://agent-exchange-mongo:27017
+      - DB_NAME=411lol
+    volumes:
+      - ./public:/app/public:ro
+    depends_on:
+      - mongo
+    networks:
+      - internal
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.agent-411.rule=Host(`411.lol`) || Host(`www.411.lol`) || Host(`api.411.lol`) || Host(`agents.86hate.com`) || Host(`websearch.411.lol`) || Host(`textnow.411.lol`) || Host(`aiagentforhire.411.lol`)"
+      - "traefik.http.routers.agent-411.entrypoints=websecure"
+      - "traefik.http.routers.agent-411.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.agent-411.service=agent-svc"
+      - "traefik.http.routers.agent-exchange.rule=Host(`axp.33x.me`)"
+      - "traefik.http.routers.agent-exchange.entrypoints=websecure"
+      - "traefik.http.routers.agent-exchange.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.agent-exchange.service=agent-svc"
+      - "traefik.http.services.agent-svc.loadbalancer.server.port=3000"
+
+  mcp-server:
+    image: node:20-slim
+    container_name: agent-exchange-mcp
+    working_dir: /app
+    command: ["node", "index.js", "--http", "--port", "3100"]
+    restart: unless-stopped
+    environment:
+      - API_BASE=http://agent-exchange:3000
+    volumes:
+      - ./mcp-server:/app:ro
+    depends_on:
+      - agent-exchange
+    networks:
+      - internal
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.mcp-411.rule=Host(`mcp.411.lol`)"
+      - "traefik.http.routers.mcp-411.entrypoints=websecure"
+      - "traefik.http.routers.mcp-411.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.mcp-411.service=mcp-svc"
+      - "traefik.http.services.mcp-svc.loadbalancer.server.port=3100"
+
+  mongo:
+    image: mongo:4.4
+    container_name: agent-exchange-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - internal
+
+networks:
+  internal:
+  traefik:
+    external: true
+
+volumes:
+  mongo_data:

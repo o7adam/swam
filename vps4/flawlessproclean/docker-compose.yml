@@ -1,0 +1,37 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: flawlessproclean
+    restart: unless-stopped
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flawless.rule=Host(`flawlessproclean.com`)"
+      - "traefik.http.routers.flawless.entrypoints=websecure"
+      - "traefik.http.routers.flawless.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.flawless.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik"
+
+  api:
+    image: node:20-alpine
+    container_name: flawless-api
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./api:/app
+      - /opt/shared:/opt/shared
+    command: sh -c "npm install --production && node server.js"
+    environment:
+      - MAIL_PASS=F0rm5#Subm1t@2026!Secure
+    networks:
+      - internal
+
+networks:
+  traefik:
+    external: true
+  internal:

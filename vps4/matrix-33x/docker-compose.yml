@@ -1,0 +1,61 @@
+services:
+  synapse-33x:
+    image: matrixdotorg/synapse:latest
+    container_name: synapse-33x
+    restart: unless-stopped
+    depends_on:
+      - postgres-33x
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+    volumes:
+      - ./synapse/data:/data
+    networks:
+      - traefik
+      - matrix-33x-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      # Main matrix.33x.me route
+      - "traefik.http.routers.synapse-33x.rule=Host(`matrix.33x.me`)"
+      - "traefik.http.routers.synapse-33x.entrypoints=websecure"
+      - "traefik.http.routers.synapse-33x.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.synapse-33x.loadbalancer.server.port=8008"
+      # Federation .well-known on root domain (33x.me)
+      - "traefik.http.routers.synapse-33x-wellknown.rule=Host(`33x.me`) && PathPrefix(`/.well-known/matrix`)"
+      - "traefik.http.routers.synapse-33x-wellknown.entrypoints=websecure"
+      - "traefik.http.routers.synapse-33x-wellknown.tls.certresolver=letsencrypt-dns"
+
+  postgres-33x:
+    image: postgres:15-alpine
+    container_name: synapse-postgres-33x
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=synapse_33x_secure_2026
+      - POSTGRES_DB=synapse_33x
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    networks:
+      - matrix-33x-internal
+
+  element-33x:
+    image: vectorim/element-web:latest
+    container_name: element-33x
+    restart: unless-stopped
+    volumes:
+      - ./element-config.json:/app/config.json:ro
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.element-33x.rule=Host(`element.33x.me`)"
+      - "traefik.http.routers.element-33x.entrypoints=websecure"
+      - "traefik.http.routers.element-33x.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.element-33x.loadbalancer.server.port=80"
+
+networks:
+  traefik:
+    external: true
+  matrix-33x-internal:
+    driver: bridge

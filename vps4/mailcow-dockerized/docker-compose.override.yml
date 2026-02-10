@@ -1,0 +1,17 @@
+services:
+  nginx-mailcow:
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailcow.rule=Host(`mail.86hate.com`)"
+      - "traefik.http.routers.mailcow.entrypoints=websecure"
+      - "traefik.http.routers.mailcow.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.mailcow.loadbalancer.server.port=8444"
+      - "traefik.http.services.mailcow.loadbalancer.server.scheme=https"
+      - "traefik.http.services.mailcow.loadbalancer.serversTransport=mailcow@file"
+      - "traefik.docker.network=traefik"
+
+networks:
+  traefik:
+    external: true

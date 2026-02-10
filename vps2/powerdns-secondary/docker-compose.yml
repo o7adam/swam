@@ -1,0 +1,14 @@
+services:
+  pdns-secondary:
+    image: powerdns/pdns-auth-49:latest
+    container_name: pdns-secondary
+    restart: unless-stopped
+    ports:
+      - "107.150.57.154:53:53/tcp"
+      - "107.150.57.154:53:53/udp"
+    volumes:
+      - pdns-data:/var/lib/powerdns
+      - ./pdns.conf:/etc/powerdns/pdns.conf:ro
+
+volumes:
+  pdns-data:

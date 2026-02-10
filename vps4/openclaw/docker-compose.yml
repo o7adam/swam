@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  openclaw:
+    image: alpine/openclaw:latest
+    container_name: openclaw-vps4
+    restart: unless-stopped
+    ports:
+      - '8443:3000'
+    volumes:
+      - ./config:/root/.openclaw
+      - ./workspace:/root/.openclaw/workspace
+      - ./data:/data
+    environment:
+      - ANTHROPIC_API_KEY=REDACTED
+    networks:
+      - openclaw-net
+      - matrix-33x_matrix-33x-internal
+
+networks:
+  openclaw-net:
+    driver: bridge
+  matrix-33x_matrix-33x-internal:
+    external: true

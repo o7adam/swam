@@ -1,0 +1,21 @@
+services:
+  etherpad:
+    image: etherpad/etherpad:latest
+    container_name: etherpad
+    restart: unless-stopped
+    environment:
+      - TITLE=86hate Pad
+      - DEFAULT_PAD_TEXT=Welcome to 86hate Pad!
+      - SUPPRESS_ERRORS_IN_PAD_TEXT=true
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.etherpad.rule=Host(`pad.86hate.com`)"
+      - "traefik.http.routers.etherpad.entrypoints=websecure"
+      - "traefik.http.routers.etherpad.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.etherpad.loadbalancer.server.port=9001"
+
+networks:
+  traefik:
+    external: true

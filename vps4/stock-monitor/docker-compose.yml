@@ -1,0 +1,29 @@
+services:
+  stock-monitor:
+    build: .
+    container_name: stock-monitor
+    restart: unless-stopped
+    environment:
+      # Tickers to monitor
+      - TICKERS=SPY,QQQ,DIA,INTC,NVDA,AAPL,TSLA,ULCC,MSFT,META,ES=F,NQ=F,YM=F,EURUSD=X
+      # Alert if move exceeds this % from prior close
+      - ALERT_THRESHOLD=0.5
+      # Check interval (5 minutes)
+      - CHECK_INTERVAL_MS=300000
+      # Matrix alerting
+      - MATRIX_HOMESERVER=https://matrix.86hate.com
+      - MATRIX_TOKEN=${MATRIX_TOKEN}
+      - MATRIX_ROOM=!uCPQFzUrGclvjPxKkj:86hate.com
+      # Twilio SMS alerting
+      - TWILIO_ACCOUNT_SID=REDACTED
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-REDACTED}
+      - TWILIO_PHONE=+13215873414
+      - SMS_TO=+13214270152
+    volumes:
+      - ./data:/data
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true

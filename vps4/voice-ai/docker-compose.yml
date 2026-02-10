@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  voice-ai:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "3001:3000"
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.voice.rule=Host(`voice.86hate.com`)"
+      - "traefik.http.routers.voice.entrypoints=websecure"
+      - "traefik.http.routers.voice.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.voice-http.rule=Host(`voice.86hate.com`)"
+      - "traefik.http.routers.voice-http.entrypoints=web"
+      - "traefik.http.services.voice-ai.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik"
+networks:
+  traefik:
+    external: true

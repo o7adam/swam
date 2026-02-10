@@ -1,0 +1,52 @@
+services:
+  landing:
+    image: nginx:alpine
+    container_name: landing-page
+    restart: unless-stopped
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      # 86hate.com
+      - "traefik.http.routers.landing.rule=Host(`86hate.com`) || Host(`www.86hate.com`)"
+      - "traefik.http.routers.landing.entrypoints=websecure"
+      - "traefik.http.routers.landing.tls.certresolver=letsencrypt-dns"
+      # 33x.me
+      - "traefik.http.routers.landing-33x.rule=Host(`33x.me`) || Host(`www.33x.me`)"
+      - "traefik.http.routers.landing-33x.entrypoints=websecure"
+      - "traefik.http.routers.landing-33x.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.landing-33x.service=landing"
+      # 33u.me (DNS challenge for SSL - works before public DNS is pointed)
+      - "traefik.http.routers.landing-33u.rule=Host(`33u.me`) || Host(`www.33u.me`)"
+      - "traefik.http.routers.landing-33u.entrypoints=websecure"
+      - "traefik.http.routers.landing-33u.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.landing-33u.service=landing"
+      # 411.lol
+      - "traefik.http.routers.landing-411.rule=Host(`411.lol`) || Host(`www.411.lol`)"
+      - "traefik.http.routers.landing-411.entrypoints=websecure"
+      - "traefik.http.routers.landing-411.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.landing-411.service=landing"
+      # sagrad.net
+      - "traefik.http.routers.landing-sagrad.rule=Host(`sagrad.net`) || Host(`www.sagrad.net`)"
+      - "traefik.http.routers.landing-sagrad.entrypoints=websecure"
+      - "traefik.http.routers.landing-sagrad.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.landing-sagrad.service=landing"
+      # aharriman.com
+      - "traefik.http.routers.landing-aharriman.rule=Host(`aharriman.com`) || Host(`www.aharriman.com`)"
+      - "traefik.http.routers.landing-aharriman.entrypoints=websecure"
+      - "traefik.http.routers.landing-aharriman.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.landing-aharriman.service=landing"
+      # silohsailing.com
+      - "traefik.http.routers.landing-siloh.rule=Host(`silohsailing.com`) || Host(`www.silohsailing.com`)"
+      - "traefik.http.routers.landing-siloh.entrypoints=websecure"
+      - "traefik.http.routers.landing-siloh.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.landing-siloh.service=landing"
+      # Service
+      - "traefik.http.services.landing.loadbalancer.server.port=80"
+
+networks:
+  traefik:
+    external: true

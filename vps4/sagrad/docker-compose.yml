@@ -1,0 +1,19 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: sagrad
+    restart: unless-stopped
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sagrad.rule=Host(`sagrad.net`) || Host(`www.sagrad.net`)"
+      - "traefik.http.routers.sagrad.entrypoints=websecure"
+      - "traefik.http.routers.sagrad.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.sagrad.loadbalancer.server.port=80"
+
+networks:
+  traefik:
+    external: true

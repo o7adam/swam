@@ -1,0 +1,75 @@
+services:
+  app:
+    image: zknt/pixelfed:latest
+    container_name: pixelfed
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - ENTRYPOINT_SKIP_MIGRATE=true
+    volumes:
+      - ./storage:/var/www/storage
+      - ./bootstrap-cache:/var/www/bootstrap/cache
+    networks:
+      - internal
+      - web
+    depends_on:
+      - db
+      - redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pixelfed.rule=Host(`pf.33x.me`)"
+      - "traefik.http.routers.pixelfed.entrypoints=websecure"
+      - "traefik.http.routers.pixelfed.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.pixelfed.loadbalancer.server.port=80"
+      - "traefik.docker.network=web"
+
+  worker:
+    image: zknt/pixelfed:latest
+    container_name: pixelfed-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - ENTRYPOINT_SKIP_MIGRATE=true
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["sleep 30 && gosu www-data php artisan horizon"]
+    volumes:
+      - ./storage:/var/www/storage
+      - ./bootstrap-cache:/var/www/bootstrap/cache
+    networks:
+      - internal
+    depends_on:
+      - db
+      - redis
+      - app
+
+  db:
+    image: mariadb:10.11
+    container_name: pixelfed-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-pixelfed_root_secure_pass_2026}
+      MYSQL_DATABASE: ${DB_DATABASE:-pixelfed_prod}
+      MYSQL_USER: ${DB_USERNAME:-pixelfed}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-pixelfed_db_pass}
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: pixelfed-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - internal
+
+networks:
+  internal:
+    internal: true
+  web:
+    external: true

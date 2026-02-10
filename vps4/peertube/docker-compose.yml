@@ -1,0 +1,65 @@
+services:
+  peertube:
+    image: chocobozzz/peertube:production-bookworm
+    networks:
+      internal:
+      traefik:
+    env_file:
+      - .env
+    volumes:
+      - assets:/app/client/dist
+      - ./docker-volume/data:/data
+      - ./docker-volume/config:/config
+    depends_on:
+      - postgres
+      - redis
+      - postfix
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      # Primary domain - pt.86hate.com
+      - "traefik.http.routers.peertube.rule=Host(`pt.86hate.com`)"
+      - "traefik.http.routers.peertube.entrypoints=websecure"
+      - "traefik.http.routers.peertube.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.peertube.service=peertube"
+      # Service
+      - "traefik.http.services.peertube.loadbalancer.server.port=9000"
+      - "traefik.docker.network=traefik"
+
+  postgres:
+    image: postgres:13-alpine
+    hostname: pt_postgres
+    env_file:
+      - .env
+    volumes:
+      - ./docker-volume/db:/var/lib/postgresql/data
+    restart: always
+    networks:
+      internal:
+
+  redis:
+    image: redis:8-alpine
+    volumes:
+      - ./docker-volume/redis:/data
+    restart: always
+    networks:
+      internal:
+
+  postfix:
+    image: mwader/postfix-relay
+    env_file:
+      - .env
+    volumes:
+      - ./docker-volume/opendkim/keys:/etc/opendkim/keys
+    restart: always
+    networks:
+      internal:
+
+networks:
+  internal:
+    external: false
+  traefik:
+    external: true
+
+volumes:
+  assets:

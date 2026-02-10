@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pdns-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pdns
+      POSTGRES_PASSWORD: pdns-vps1-secret
+      POSTGRES_DB: pdns
+    volumes:
+      - pdns-db:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - pdns-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pdns"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pdns:
+    image: powerdns/pdns-auth-49:latest
+    container_name: powerdns
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./config/pdns.conf:/etc/powerdns/pdns.conf:ro
+    ports:
+      - "69.30.252.50:53:53/tcp"
+      - "69.30.252.50:53:53/udp"
+    networks:
+      - pdns-internal
+
+volumes:
+  pdns-db:
+
+networks:
+  pdns-internal:

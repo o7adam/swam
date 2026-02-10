@@ -1,0 +1,16 @@
+services:
+  pantalaimon:
+    image: matrixdotorg/pantalaimon:latest
+    container_name: pantalaimon
+    restart: unless-stopped
+    command: ["-c", "/data/pantalaimon.conf", "--data-path", "/data"]
+    volumes:
+      - ./:/data
+    ports:
+      - "127.0.0.1:8009:8009"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true

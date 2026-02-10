@@ -1,0 +1,76 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pdns-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pdns
+      POSTGRES_PASSWORD: ${PDNS_DB_PASS}
+      POSTGRES_DB: pdns
+    volumes:
+      - pdns-db:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - pdns-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pdns"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pdns:
+    image: powerdns/pdns-auth-49:latest
+    container_name: powerdns
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./config/pdns.conf:/etc/powerdns/pdns.conf:ro
+    ports:
+      - "204.12.221.219:53:53/tcp"
+      - "204.12.221.219:53:53/udp"
+      - "204.12.221.220:53:53/tcp"
+      - "204.12.221.220:53:53/udp"
+      - "204.12.221.218:53:53/tcp"
+      - "204.12.221.218:53:53/udp"
+    networks:
+      - pdns-internal
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pdns-api.rule=Host(`dns.86hate.com`)"
+      - "traefik.http.routers.pdns-api.entrypoints=websecure"
+      - "traefik.http.routers.pdns-api.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.pdns-api.loadbalancer.server.port=8081"
+      - "traefik.docker.network=traefik"
+
+  pdns-admin:
+    image: powerdnsadmin/pda-legacy:latest
+    container_name: pdns-admin
+    restart: unless-stopped
+    depends_on:
+      - pdns
+    environment:
+      - SECRET_KEY=${PDNS_ADMIN_SECRET}
+      - SQLALCHEMY_DATABASE_URI=postgresql://pdns:${PDNS_DB_PASS}@db/pdns_admin
+      - GUNICORN_TIMEOUT=60
+      - GUNICORN_WORKERS=2
+    networks:
+      - pdns-internal
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pdns-admin.rule=Host(`ns.86hate.com`)"
+      - "traefik.http.routers.pdns-admin.entrypoints=websecure"
+      - "traefik.http.routers.pdns-admin.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.pdns-admin.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik"
+
+volumes:
+  pdns-db:
+
+networks:
+  pdns-internal:
+  traefik:
+    external: true

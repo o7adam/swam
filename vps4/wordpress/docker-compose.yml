@@ -1,0 +1,49 @@
+networks:
+  web:
+    external: true
+  internal:
+    driver: bridge
+
+services:
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: wp_secure_pass_2026
+    volumes:
+      - wordpress_data:/var/www/html
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.wordpress.rule=Host(`wp.86hate.com`)'
+      - 'traefik.http.routers.wordpress.entrypoints=websecure'
+      - 'traefik.http.routers.wordpress.tls=true'
+      - 'traefik.http.routers.wordpress.tls.certresolver=letsencrypt-dns'
+      - 'traefik.http.services.wordpress.loadbalancer.server.port=80'
+      - 'traefik.docker.network=web'
+    networks:
+      - internal
+      - web
+    depends_on:
+      - wordpress-db
+
+  wordpress-db:
+    image: mariadb:10.11
+    container_name: wordpress-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: wp_root_pass_2026
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wpuser
+      MARIADB_PASSWORD: wp_secure_pass_2026
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - internal
+
+volumes:
+  mysql_data:
+  wordpress_data:

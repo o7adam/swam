@@ -1,0 +1,4 @@
+ID                            HOSTNAME            STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+vuqhehuzq0iydw6sqdxyjsq57     33x                 Ready     Active         Reachable        27.1.1
+u260qc4rpr5v25kow0mmuenwc *   s282356.nocix.net   Ready     Active         Leader           29.2.1
+roar11zoha8s22rtb6k4lbeqx     vps1                Ready     Active         Reachable        29.2.1

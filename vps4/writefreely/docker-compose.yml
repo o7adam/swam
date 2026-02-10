@@ -1,0 +1,41 @@
+services:
+  writefreely:
+    image: writeas/writefreely:latest
+    container_name: writefreely
+    volumes:
+      - ./config.ini:/go/config.ini
+      - ./keys:/go/keys
+      - ./data:/go/data
+    networks:
+      - traefik
+      - writefreely-internal
+    depends_on:
+      - db
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.writefreely.rule=Host(`wf.86hate.com`)"
+      - "traefik.http.routers.writefreely.tls=true"
+      - "traefik.http.routers.writefreely.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.writefreely.entrypoints=websecure"
+      - "traefik.http.services.writefreely.loadbalancer.server.port=8080"
+
+  db:
+    image: mariadb:10.11
+    container_name: writefreely-db
+    volumes:
+      - ./db-data:/var/lib/mysql
+    networks:
+      - writefreely-internal
+    environment:
+      - MYSQL_ROOT_PASSWORD=wf_root_secure_2026
+      - MYSQL_DATABASE=writefreely
+      - MYSQL_USER=writefreely
+      - MYSQL_PASSWORD=wf_user_secure_2026
+    restart: unless-stopped
+
+networks:
+  traefik:
+    external: true
+  writefreely-internal:
+    driver: bridge

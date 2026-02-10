@@ -1,0 +1,71 @@
+services:
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/config"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@86hate.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt-dns.acme.dnschallenge=true"
+      - "--certificatesresolvers.letsencrypt-dns.acme.dnschallenge.provider=pdns"
+      - "--certificatesresolvers.letsencrypt-dns.acme.dnschallenge.delaybeforecheck=60"
+      - "--certificatesresolvers.letsencrypt-dns.acme.dnschallenge.resolvers=204.12.221.219:53,204.12.221.220:53"
+      - "--certificatesresolvers.letsencrypt-dns.acme.email=admin@86hate.com"
+      - "--certificatesresolvers.letsencrypt-dns.acme.storage=/letsencrypt/acme-dns.json"
+      - "--certificatesresolvers.zerossl-dns.acme.dnschallenge=true"
+      - "--certificatesresolvers.zerossl-dns.acme.dnschallenge.provider=pdns"
+      - "--certificatesresolvers.zerossl-dns.acme.dnschallenge.delaybeforecheck=60"
+      - "--certificatesresolvers.zerossl-dns.acme.dnschallenge.resolvers=204.12.221.219:53,204.12.221.220:53"
+      - "--certificatesresolvers.zerossl-dns.acme.email=admin@86hate.com"
+      - "--certificatesresolvers.zerossl-dns.acme.storage=/letsencrypt/acme-zerossl.json"
+      - "--certificatesresolvers.zerossl-dns.acme.caserver=https://acme.zerossl.com/v2/DV90"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    extra_hosts:
+      - "ns1.86hate.com:204.12.221.219"
+      - "ns2.86hate.com:204.12.221.220"
+    environment:
+      - PDNS_API_KEY=d2e599045b9e1bdccfcafece892ae9040f6941bd0d7e7c34b626600f02e7686c
+      - PDNS_API_URL=http://powerdns:8081
+      - PDNS_SERVER_NAME=localhost
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+      - /opt/traefik/config:/config:ro
+    networks:
+      - traefik
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.86hate.com`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$To/VkkJt$$tQT1U73YEbrGM17AyejtB/"
+
+networks:
+  traefik:
+    name: traefik
+    driver: bridge
+  web:
+    external: true
+
+volumes:
+  traefik_letsencrypt:

@@ -1,0 +1,11 @@
+*.env
+*.key
+*.pem
+*.crt
+node_modules/
+data/
+*.db
+*.sql
+*.log
+*.tar.gz
+media/

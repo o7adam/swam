@@ -1,0 +1,90 @@
+version: '3.8'
+services:
+  db:
+    restart: always
+    image: postgres:14-alpine
+    shm_size: 256mb
+    networks:
+      - mastodon-internal
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'mastodon']
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: mastodon
+      POSTGRES_PASSWORD: mastodon_db_pass
+      POSTGRES_DB: mastodon_production
+
+  redis:
+    restart: always
+    image: redis:7-alpine
+    networks:
+      - mastodon-internal
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+    volumes:
+      - ./redis:/data
+
+  web:
+    image: ghcr.io/mastodon/mastodon:v4.2.0
+    restart: always
+    env_file: .env.production
+    command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
+    networks:
+      - mastodon-internal
+      - traefik
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:3000/health || exit 1']
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./public/system:/mastodon/public/system
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mastodon.rule=Host(`mastodon.33x.me`)"
+      - "traefik.http.routers.mastodon.entrypoints=websecure"
+      - "traefik.http.routers.mastodon.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.mastodon.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik"
+
+  streaming:
+    image: ghcr.io/mastodon/mastodon:v4.2.0
+    restart: always
+    env_file: .env.production
+    command: node ./streaming
+    networks:
+      - mastodon-internal
+      - traefik
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1']
+    depends_on:
+      - db
+      - redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mastodon-streaming.rule=Host(`mastodon.33x.me`) && PathPrefix(`/api/v1/streaming`)"
+      - "traefik.http.routers.mastodon-streaming.entrypoints=websecure"
+      - "traefik.http.routers.mastodon-streaming.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.mastodon-streaming.loadbalancer.server.port=4000"
+      - "traefik.docker.network=traefik"
+
+  sidekiq:
+    image: ghcr.io/mastodon/mastodon:v4.2.0
+    restart: always
+    env_file: .env.production
+    command: bundle exec sidekiq
+    networks:
+      - mastodon-internal
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq 6' || false"]
+
+networks:
+  mastodon-internal:
+  traefik:
+    external: true

@@ -1,0 +1,91 @@
+
+networks:
+  default:
+  traefik:
+    external: true
+
+services:
+  postgres:
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+    image: postgres:15-alpine
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  redis:
+    restart: unless-stopped
+    env_file: .env
+    image: redis:7-alpine
+    volumes:
+      - ./data/redis:/data
+
+  celeryworker:
+    restart: unless-stopped
+    image: funkwhale/api:${FUNKWHALE_VERSION:-1.4.0}
+    depends_on:
+      - postgres
+      - redis
+    env_file: .env
+    command:
+      - celery
+      - --app=funkwhale_api.taskapp
+      - worker
+      - --loglevel=INFO
+      - --concurrency=${CELERYD_CONCURRENCY-0}
+    environment:
+      - C_FORCE_ROOT=true
+    volumes:
+      - "${MUSIC_DIRECTORY_SERVE_PATH-/opt/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
+      - "${MEDIA_ROOT}:${MEDIA_ROOT}"
+
+  celerybeat:
+    restart: unless-stopped
+    image: funkwhale/api:${FUNKWHALE_VERSION:-1.4.0}
+    command:
+      - celery
+      - --app=funkwhale_api.taskapp
+      - beat
+      - --loglevel=INFO
+    depends_on:
+      - postgres
+      - redis
+    env_file: .env
+
+  api:
+    restart: unless-stopped
+    image: funkwhale/api:${FUNKWHALE_VERSION:-1.4.0}
+    depends_on:
+      - postgres
+      - redis
+    env_file: .env
+    volumes:
+      - "${MUSIC_DIRECTORY_SERVE_PATH-/opt/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
+      - "${MEDIA_ROOT}:${MEDIA_ROOT}"
+      - "${STATIC_ROOT}:${STATIC_ROOT}"
+
+  front:
+    restart: unless-stopped
+    image: funkwhale/front:${FUNKWHALE_VERSION:-1.4.0}
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - "NGINX_MAX_BODY_SIZE=${NGINX_MAX_BODY_SIZE-100M}"
+    volumes:
+      - "${MUSIC_DIRECTORY_SERVE_PATH-/opt/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
+      - "${MEDIA_ROOT}:${MEDIA_ROOT}:ro"
+      - "${STATIC_ROOT}:/usr/share/nginx/html/staticfiles:ro"
+    networks:
+      - default
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.funkwhale.rule=Host(`music.86hate.com`)"
+      - "traefik.http.routers.funkwhale.entrypoints=websecure"
+      - "traefik.http.routers.funkwhale.tls=true"
+      - "traefik.http.routers.funkwhale.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.services.funkwhale.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik"

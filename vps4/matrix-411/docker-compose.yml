@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: synapse-411
+    restart: unless-stopped
+    volumes:
+      - ./synapse:/data
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+      - traefik
+      - axp
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.matrix-411.rule=Host(`matrix.411.lol`)"
+      - "traefik.http.routers.matrix-411.entrypoints=websecure"
+      - "traefik.http.routers.matrix-411.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.matrix-411.service=matrix-411-svc"
+      - "traefik.http.services.matrix-411-svc.loadbalancer.server.port=8008"
+      - "traefik.http.routers.matrix-411-wk.rule=Host(`411.lol`) && PathPrefix(`/.well-known/matrix`)"
+      - "traefik.http.routers.matrix-411-wk.entrypoints=websecure"
+      - "traefik.http.routers.matrix-411-wk.tls.certresolver=letsencrypt-dns"
+      - "traefik.http.routers.matrix-411-wk.service=matrix-411-svc"
+    healthcheck:
+      test: ["CMD", "curl", "-fSs", "http://localhost:8008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: matrix-411-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=synapse411
+      - POSTGRES_DB=synapse
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U synapse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  internal:
+  traefik:
+    external: true
+  axp:
+    external: true
+    name: agent-exchange_internal
