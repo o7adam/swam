@@ -1,0 +1,44 @@
+version: "3.8"
+services:
+  sara:
+    image: 127.0.0.1:5000/sara:latest
+    environment:
+      - ANTHROPIC_API_KEY=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
+    extra_hosts:
+      - host-gateway:host-gateway
+    volumes:
+      - /opt/sara/openclaw-home:/root/.openclaw
+    networks:
+      - traefik-public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik-public"
+
+        # --- HTTP router (Authentik protected) ---
+        - "traefik.http.routers.sara.rule=Host(`sara.33x.me`)"
+        - "traefik.http.routers.sara.entrypoints=websecure"
+        - "traefik.http.routers.sara.tls=true"
+        - "traefik.http.routers.sara.tls.certresolver=letsencrypt-dns"
+        - "traefik.http.routers.sara.middlewares=authentik-forward@swarm"
+        - "traefik.http.routers.sara.service=sara-svc"
+        - "traefik.http.routers.sara.priority=10"
+
+        # --- WebSocket router (no Authentik — token auth via OpenClaw) ---
+        - "traefik.http.routers.sara-ws.rule=Host(`sara.33x.me`) && HeadersRegexp(`Upgrade`, `(?i)websocket`)"
+        - "traefik.http.routers.sara-ws.entrypoints=websecure"
+        - "traefik.http.routers.sara-ws.tls=true"
+        - "traefik.http.routers.sara-ws.tls.certresolver=letsencrypt-dns"
+        - "traefik.http.routers.sara-ws.service=sara-svc"
+        - "traefik.http.routers.sara-ws.priority=20"
+
+        # --- Service ---
+        - "traefik.http.services.sara-svc.loadbalancer.server.port=8443"
+
+      placement:
+        constraints:
+          - node.hostname == vps5
+
+networks:
+  traefik-public:
+    external: true

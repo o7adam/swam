@@ -1,0 +1,66 @@
+{
+  "gateway": {
+    "port": 8443,
+    "bind": "lan",
+    "auth": {
+      "mode": "token",
+      "token": "sara-vps4-token-2026"
+    },
+    "trustedProxies": [
+      "10.0.0.0/8",
+      "172.16.0.0/12"
+    ],
+    "mode": "local"
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "ollama": {
+        "baseUrl": "http://host-gateway:11434",
+        "api": "ollama",
+        "models": [
+          {
+            "id": "llama3.1:8b",
+            "name": "Llama 3.1 8B (local)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 131072,
+            "maxTokens": 4096
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "ollama/llama3.1:8b"
+      },
+      "models": {
+        "ollama/llama3.1:8b": {
+          "alias": "local"
+        }
+      },
+      "heartbeat": {
+        "every": "1h",
+        "activeHours": {
+          "start": "08:00",
+          "end": "22:00",
+          "timezone": "America/New_York"
+        },
+        "model": "ollama/llama3.1:8b"
+      },
+      "subagents": {
+        "model": "ollama/llama3.1:8b"
+      }
+    }
+  }
+}
