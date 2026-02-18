@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adam's Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);min-height:100vh;color:#e0e0e0;padding:16px;line-height:1.4}
+.container{max-width:960px;margin:0 auto}
+h1{font-size:1.6em;color:#fff;font-weight:700;display:inline}
+header{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.search-box{flex:1;min-width:180px}
+.search-box input{width:100%;padding:7px 14px;font-size:14px;border:1px solid rgba(255,255,255,0.2);border-radius:6px;background:rgba(255,255,255,0.06);color:#fff}
+.search-box input:focus{outline:none;border-color:#4a90e2}
+.search-box input::placeholder{color:rgba(255,255,255,0.35)}
+.section{margin-bottom:8px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.08)}
+.section-header{padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;background:rgba(0,0,0,0.2);border-radius:10px;transition:background 0.2s}
+.section-header:hover{background:rgba(0,0,0,0.35)}
+.section.open .section-header{border-radius:10px 10px 0 0}
+.section-title{font-size:0.95em;font-weight:600;color:#fff}
+.chevron{color:rgba(255,255,255,0.5);font-size:0.75em;transition:transform 0.2s}
+.section.open .chevron{transform:rotate(90deg)}
+.section-content{display:none;padding:12px 14px}
+.section.open .section-content{display:block}
+
+/* Pill grid */
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;background:rgba(74,144,226,0.1);border:1px solid rgba(74,144,226,0.22);border-radius:20px;color:#7bb5f0;text-decoration:none;font-size:0.82em;transition:all 0.15s;white-space:nowrap}
+.pill:hover{background:rgba(74,144,226,0.22);border-color:rgba(74,144,226,0.5);color:#a8d1ff}
+.pill.red{background:rgba(244,67,54,0.1);border-color:rgba(244,67,54,0.22);color:#ef9a9a}
+.pill.yellow{background:rgba(255,193,7,0.1);border-color:rgba(255,193,7,0.22);color:#ffe082}
+.pill.green{background:rgba(76,175,80,0.1);border-color:rgba(76,175,80,0.22);color:#a5d6a7}
+.pill-group{margin-bottom:10px}
+.pill-group:last-child{margin-bottom:0}
+.group-label{font-size:0.72em;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+
+/* Big Data grid */
+.data-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px}
+.data-card{display:flex;align-items:center;gap:7px;padding:7px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#ccc;text-decoration:none;font-size:0.82em;transition:all 0.15s}
+.data-card:hover{background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.2);color:#fff}
+.data-card .ico{font-size:1.1em;flex-shrink:0}
+.data-card .lbl{line-height:1.2}
+.data-card .lbl small{display:block;font-size:0.78em;color:rgba(255,255,255,0.38);margin-top:1px}
+
+footer{text-align:center;margin-top:16px;color:rgba(255,255,255,0.35);font-size:0.78em}
+.hidden{display:none!important}
+@media(max-width:600px){h1{font-size:1.3em}.data-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Adam's Dashboard</h1>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="🔍 Search…" autocomplete="off">
+  </div>
+</header>
+
+<!-- Projects & Sites -->
+<div class="section open" data-section="projects">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="section-title">🆕 Projects &amp; Sites</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-content">
+    <div class="pill-group">
+      <div class="group-label">Active</div>
+      <div class="pills">
+        <a href="https://411.lol" class="pill" target="_blank">🤖 Agent Exchange</a>
+        <a href="https://snow.86hate.com" class="pill" target="_blank">⛵ Snow Crystal</a>
+        <a href="https://flawlessproclean.com" class="pill" target="_blank">🧹 Flawless Pro Clean</a>
+        <a href="https://treasure.86hate.com" class="pill" target="_blank">🏴‍☠️ Treasure Maps</a>
+        <a href="https://blog.86hate.com" class="pill" target="_blank">📝 Blog</a>
+        <a href="https://86hate.com" class="pill" target="_blank">🌐 86hate.com</a>
+      </div>
+    </div>
+    <div class="pill-group">
+      <div class="group-label">411.lol subdomains</div>
+      <div class="pills">
+        <a href="https://mcp.411.lol" class="pill" target="_blank">mcp.411.lol</a>
+        <a href="https://websearch.411.lol" class="pill" target="_blank">websearch.411.lol</a>
+        <a href="https://textnow.411.lol" class="pill" target="_blank">textnow.411.lol</a>
+        <a href="https://aiagentforhire.411.lol" class="pill" target="_blank">aiagentforhire.411.lol</a>
+        <a href="https://agents.33x.me" class="pill" target="_blank">agents.33x.me</a>
+      </div>
+    </div>
+    <div class="pill-group">
+      <div class="group-label">Snow Crystal</div>
+      <div class="pills">
+        <a href="https://snow.86hate.com" class="pill" target="_blank">📊 Dashboard</a>
+        <a href="https://datainsnow.86hate.com" class="pill" target="_blank">🔌 API</a>
+      </div>
+    </div>
+    <div class="pill-group">
+      <div class="group-label">Blog extras</div>
+      <div class="pills">
+        <a href="/adam/blog-archive.html" class="pill" target="_blank">📚 Archive 2009–2010</a>
+        <a href="/adam/blog-24h.html" class="pill" target="_blank">⏱️ 24h Post</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Use -->
+<div class="section open" data-section="daily">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="section-title">📬 Daily Use</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-content">
+    <div class="pills">
+      <a href="https://mail.86hate.com" class="pill" target="_blank">📧 Mail (SOGo)</a>
+      <a href="https://element.86hate.com" class="pill" target="_blank">💬 Matrix (Element)</a>
+      <a href="https://cal.86hate.com" class="pill" target="_blank">📅 Calendar</a>
+      <a href="https://pad.86hate.com" class="pill" target="_blank">📓 Notes (HedgeDoc)</a>
+      <a href="https://search.86hate.com" class="pill" target="_blank">🔍 Search (SearXNG)</a>
+      <a href="https://dav.86hate.com" class="pill" target="_blank">📁 WebDAV</a>
+      <a href="https://sara.33x.me/?token=sara-vps4-token-2026" class="pill green" target="_blank">🤖 Sara AI</a>
+      <a href="https://music.86hate.com" class="pill red" target="_blank">🎵 Music (down)</a>
+    </div>
+  </div>
+</div>
+
+<!-- Admin & Monitoring -->
+<div class="section" data-section="admin">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="section-title">🔧 Admin &amp; Monitoring</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-content">
+    <div class="pill-group">
+      <div class="group-label">Infrastructure</div>
+      <div class="pills">
+        <a href="https://traefik.86hate.com" class="pill" target="_blank">🔀 Traefik</a>
+        <a href="https://auth.86hate.com" class="pill" target="_blank">🔐 Authentik (SSO)</a>
+        <a href="https://mc.86hate.com" class="pill" target="_blank">📋 Mission Control</a>
+        <a href="https://registry.86hate.com" class="pill" target="_blank">📦 Docker Registry</a>
+        <a href="https://mail.86hate.com/admin" class="pill" target="_blank">📨 Mailcow Admin</a>
+      </div>
+    </div>
+    <div class="pill-group">
+      <div class="group-label">Monitoring</div>
+      <div class="pills">
+        <a href="https://grafana.86hate.com" class="pill" target="_blank">📊 Grafana</a>
+        <a href="https://status.86hate.com" class="pill" target="_blank">📡 Uptime (Kuma)</a>
+        <a href="https://snow.86hate.com" class="pill" target="_blank">⛵ Snow Crystal</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Big Data -->
+<div class="section" data-section="bigdata">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="section-title">📊 Big Data</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-content">
+    <div class="data-grid">
+      <a href="/adam/mastermap.html" class="data-card"><span class="ico">🗺️</span><span class="lbl">Master Map<small>All location data</small></span></a>
+      <a href="/adam/location-map.html" class="data-card"><span class="ico">📍</span><span class="lbl">Location Map<small>13 yrs GPS tracks</small></span></a>
+      <a href="/adam/location-heatmap.html" class="data-card"><span class="ico">🔥</span><span class="lbl">Heatmap<small>Density + year filter</small></span></a>
+      <a href="/adam/trips.html" class="data-card"><span class="ico">🧳</span><span class="lbl">Trip Tracker<small>37 trips</small></span></a>
+      <a href="/adam/travel.html" class="data-card"><span class="ico">✈️</span><span class="lbl">Flights<small>25 flights mapped</small></span></a>
+      <a href="/adam/rides.html" class="data-card"><span class="ico">🚗</span><span class="lbl">Rides &amp; Travel<small>Uber, Lyft, airlines</small></span></a>
+      <a href="/adam/reviews.html" class="data-card"><span class="ico">⭐</span><span class="lbl">Reviews<small>275 across 8 countries</small></span></a>
+      <a href="/adam/reviews-map.html" class="data-card"><span class="ico">📌</span><span class="lbl">Reviews Map<small>263 mapped</small></span></a>
+      <a href="/adam/searches.html" class="data-card"><span class="ico">🔍</span><span class="lbl">Search Story<small>4,829 searches</small></span></a>
+      <a href="/adam/purchases.html" class="data-card"><span class="ico">💳</span><span class="lbl">Purchases<small>Google Pay history</small></span></a>
+      <a href="/adam/contacts/" class="data-card"><span class="ico">👥</span><span class="lbl">Contacts<small>24,773 contacts</small></span></a>
+      <a href="/adam/people.html" class="data-card"><span class="ico">🧠</span><span class="lbl">People Intel<small>Relationship analysis</small></span></a>
+      <a href="/adam/places.html" class="data-card"><span class="ico">🏪</span><span class="lbl">Places Visited<small>Cross-ref businesses</small></span></a>
+      <a href="/adam/messages.html" class="data-card"><span class="ico">💬</span><span class="lbl">Chat Messages<small>Google Chat history</small></span></a>
+      <a href="/adam/comms.html" class="data-card"><span class="ico">📞</span><span class="lbl">Comms<small>59,969 unified</small></span></a>
+      <a href="/adam/assistant.html" class="data-card"><span class="ico">🎙️</span><span class="lbl">OK Google<small>1,285 interactions</small></span></a>
+      <a href="/adam/activity.html" class="data-card"><span class="ico">📈</span><span class="lbl">Activity<small>40,770 across 26 svcs</small></span></a>
+      <a href="/adam/screentime.html" class="data-card"><span class="ico">📱</span><span class="lbl">Screen Time<small>2013–2026</small></span></a>
+      <a href="/adam/email-heatmap.html" class="data-card"><span class="ico">📧</span><span class="lbl">Email Heatmap<small>Sender IPs mapped</small></span></a>
+      <a href="/adam/takeout-index.html" class="data-card"><span class="ico">📦</span><span class="lbl">Takeout Index<small>42+ Google services</small></span></a>
+      <a href="/adam/treasure/" class="data-card"><span class="ico">🏴‍☠️</span><span class="lbl">Treasure Maps<small>Project Doubloon</small></span></a>
+    </div>
+  </div>
+</div>
+
+<!-- Wishlist -->
+<div class="section" data-section="wishlist">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="section-title">🔴 Wishlist</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-content">
+    <div class="pills">
+      <span class="pill red">🐘 Mastodon (social.86hate.com)</span>
+      <span class="pill red">📹 PeerTube (video.86hate.com)</span>
+      <span class="pill red">🖼️ Pixelfed (pics.86hate.com)</span>
+    </div>
+  </div>
+</div>
+
+<footer>Updated Feb 18, 2026 · Managed by Liz 🦝</footer>
+</div>
+
+<script>
+function toggle(hdr){
+  const s=hdr.parentElement;
+  s.classList.toggle('open');
+}
+const inp=document.getElementById('searchInput');
+inp.addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll('.section').forEach(sec=>{
+    const items=sec.querySelectorAll('.pill,.data-card');
+    let vis=0;
+    items.forEach(el=>{
+      const m=el.textContent.toLowerCase().includes(q);
+      el.classList.toggle('hidden',!m&&q!=='');
+      if(m||q==='')vis++;
+    });
+    sec.classList.toggle('hidden',vis===0&&q!=='');
+    if(q!=='')sec.classList.add('open');
+  });
+});
+document.addEventListener('keydown',function(e){
+  if(e.ctrlKey&&e.key==='a'&&e.target.tagName!=='INPUT'){
+    e.preventDefault();
+    const open=document.querySelectorAll('.section.open').length>0;
+    document.querySelectorAll('.section').forEach(s=>s.classList.toggle('open',!open));
+  }
+});
+</script>
+</body>
+</html>
